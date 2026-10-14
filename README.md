@@ -1,35 +1,103 @@
-# DEVOPS FA1 — Git-Based Infrastructure as Code and Multi-Environment Container Deployment
+# DEVOPS FA1 & FA2 — Infrastructure as Code, CI/CD, Kubernetes and Monitoring
 
-## 1. Objective
+## 1. Project Overview
 
-The objective of this assignment is to implement a Docker-based application environment using Terraform and Git while supporting QA, UAT and PROD environments using a single Terraform codebase.
+This project demonstrates DevOps practices through two assignment phases.
 
-The application environment consists of:
+**FA1 — Git-Based Infrastructure as Code and Multi-Environment Container Deployment**
 
-- Container 1: Frontend/Web application
-- Container 2: Backend/API application
+FA1 uses Docker, Terraform and Git to create a frontend and backend application environment. The same Terraform configuration supports QA, UAT and PROD environments through environment-specific variable files.
 
-Terraform is used to provision the Docker environment, while Git is used for version control.
+**FA2 — CI/CD Pipeline, Automated Testing, Kubernetes Deployment and Monitoring**
 
-The same Terraform configuration is reused for QA, UAT and PROD without creating separate copies of the infrastructure code.
+FA2 extends the application with automated testing, GitHub Actions, Docker image builds, Kubernetes Deployments and Services, Prometheus metrics collection, and Grafana dashboards.
 
----
+The project demonstrates how application development, containerization, deployment, version control and monitoring can be integrated into a DevOps workflow.
 
-## 2. Technologies Used
+## 2. Objectives
 
-- Git
-- Docker
-- Terraform
-- Nginx
-- Python
-- Flask
+The main objectives are:
 
----
+- Maintain application source code and infrastructure configuration in Git.
+- Provision multiple application environments using reusable Terraform configuration.
+- Containerize the frontend and backend applications using Docker.
+- Automate application testing and Docker image builds through GitHub Actions.
+- Deploy the frontend and backend applications to Kubernetes.
+- Demonstrate Kubernetes pod status, scaling and rollout operations.
+- Collect application metrics using Prometheus.
+- Visualize application and monitoring metrics using Grafana.
+- Document the implementation, commands and verification procedures.
 
-## 3. Project Structure
+## 3. Technologies Used
+
+| Technology | Purpose |
+|---|---|
+| Git and GitHub | Source control and repository hosting |
+| Terraform | Infrastructure as Code for FA1 |
+| Docker | Application containerization and image building |
+| Python | Backend application and automated tests |
+| Flask | Backend REST-style HTTP endpoints |
+| Nginx | Frontend web server |
+| GitHub Actions | CI pipeline automation |
+| Kubernetes | Application deployment, scaling and service discovery |
+| Prometheus | Metrics collection and querying |
+| Grafana | Metrics visualization and dashboards |
+| YAML | CI/CD, Kubernetes and monitoring configuration |
+
+## 4. Application Architecture
+
+The project contains two main application components.
+
+### 4.1 Frontend
+
+The frontend uses Nginx to serve a web page. Its Docker image is built from the frontend Dockerfile.
+
+- Container port: `80`
+- Kubernetes Deployment: `frontend`
+- Kubernetes Service: `frontend-service`
+- Kubernetes Service type: NodePort
+- Configured NodePort: `30080`
+
+### 4.2 Backend
+
+The backend uses Python and Flask to provide HTTP endpoints and application metrics.
+
+- Container port: `5000`
+- Kubernetes Deployment: `backend`
+- Kubernetes Service: `backend-service`
+- Kubernetes Service type: NodePort
+- Configured NodePort: `30001`
+
+The backend provides the following endpoints:
+
+| Endpoint | Purpose |
+|---|---|
+| `/` | Returns application information, environment and status |
+| `/health` | Returns the backend health status |
+| `/metrics` | Exposes Prometheus metrics |
+
+The `/metrics` endpoint provides request counters and request-duration measurements through the Prometheus Python client.
+
+## 5. Project Structure
+
+The main project structure is:
 
 ```text
 DEVOPS FA/
+│
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yml
+│
+├── docker/
+│   ├── frontend/
+│   │   └── Dockerfile
+│   └── backend/
+│       ├── Dockerfile
+│       └── app.py
+│
+├── tests/
+│   └── test_app.py
 │
 ├── terraform/
 │   ├── main.tf
@@ -40,343 +108,661 @@ DEVOPS FA/
 │       ├── uat.tfvars
 │       └── prod.tfvars
 │
-├── docker/
-│   ├── frontend/
-│   │   └── Dockerfile
-│   └── backend/
-│       └── Dockerfile
+├── k8s/
+│   ├── backend-deployment.yaml
+│   ├── backend-service.yaml
+│   ├── frontend-deployment.yaml
+│   └── frontend-service.yaml
+│
+├── monitoring/
+│   ├── prometheus.yml
+│   ├── prometheus-deployment.yaml
+│   └── grafana-deployment.yaml
 │
 ├── .gitignore
 └── README.md
-4. Application Containers
-4.1 Frontend Container
+```
 
-The frontend application uses Nginx.
+## 6. FA1 — Infrastructure as Code
 
-The frontend Dockerfile builds an Nginx-based container that serves a simple web page.
+### 6.1 Objective
 
-The frontend container exposes port 80 internally.
+FA1 provisions the frontend and backend Docker environment using Terraform. One Terraform codebase is reused for QA, UAT and PROD by supplying different variable files.
 
-4.2 Backend Container
+### 6.2 Terraform Configuration
 
-The backend application uses Python Flask.
+The Terraform directory contains:
 
-The backend provides:
+- `main.tf` — defines the Docker provider and infrastructure resources.
+- `variables.tf` — declares configurable environment and port variables.
+- `outputs.tf` — provides environment and application URL outputs.
+- `environments/qa.tfvars` — QA-specific values.
+- `environments/uat.tfvars` — UAT-specific values.
+- `environments/prod.tfvars` — PROD-specific values.
 
-Application endpoint
-Health-check endpoint
+### 6.3 Environment Configuration
 
-The backend container exposes port 5000 internally.
+| Environment | Frontend Port | Backend Port |
+|---|---:|---:|
+| QA | 8081 | 5001 |
+| UAT | 8082 | 5002 |
+| PROD | 8083 | 5003 |
 
-5. Environment Configuration
+### 6.4 Initialize and Validate Terraform
 
-The same Terraform code is used for all three environments.
+Run the following commands from the Terraform directory:
 
-Environment	Frontend Port	Backend Port
-QA	8081	5001
-UAT	8082	5002
-PROD	8083	5003
-
-Environment-specific values are stored in separate .tfvars files.
-
-6. Terraform Files
-main.tf
-
-Contains the Docker provider and infrastructure resources for:
-
-Frontend Docker image
-Frontend Docker container
-Backend Docker image
-Backend Docker container
-variables.tf
-
-Defines variables used by the Terraform configuration:
-
-Environment
-Frontend port
-Backend port
-outputs.tf
-
-Provides:
-
-Environment name
-Frontend URL
-Backend URL
-Backend health URL
-7. Environment Files
-QA
-
-The QA environment uses:
-
-environment = qa
-frontend port = 8081
-backend port = 5001
-
-Deployment command:
-
-terraform apply -var-file="environments/qa.tfvars"
-UAT
-
-The UAT environment uses:
-
-environment = uat
-frontend port = 8082
-backend port = 5002
-
-Deployment command:
-
-terraform apply -var-file="environments/uat.tfvars"
-PROD
-
-The PROD environment uses:
-
-environment = prod
-frontend port = 8083
-backend port = 5003
-
-Deployment command:
-
-terraform apply -var-file="environments/prod.tfvars"
-8. Terraform Initialization
-
-Terraform is initialized using:
-
+```bash
 terraform init
-
-This downloads and initializes the required Docker provider.
-
-9. Terraform Validation
-
-The Terraform configuration can be checked using:
-
-terraform validate
-
-Terraform formatting can be performed using:
-
 terraform fmt
-10. Terraform Planning
+terraform validate
+```
 
-Before applying infrastructure changes, Terraform can create an execution plan.
+`terraform init` initializes the working directory and required provider plugins.
 
-QA
+`terraform fmt` formats the Terraform configuration.
+
+`terraform validate` checks the configuration for errors.
+
+### 6.5 Plan and Deploy Environments
+
+QA:
+
+```bash
 terraform plan -var-file="environments/qa.tfvars"
-UAT
-terraform plan -var-file="environments/uat.tfvars"
-PROD
-terraform plan -var-file="environments/prod.tfvars"
-11. Environment Deployment
-QA Deployment
 terraform apply -var-file="environments/qa.tfvars"
+```
 
-The QA frontend is available at:
+UAT:
 
-http://localhost:8081
-
-The QA backend is available at:
-
-http://localhost:5001
-
-The QA health endpoint is:
-
-http://localhost:5001/health
-UAT Deployment
+```bash
+terraform plan -var-file="environments/uat.tfvars"
 terraform apply -var-file="environments/uat.tfvars"
+```
 
-The UAT frontend is available at:
+PROD:
 
-http://localhost:8082
-
-The UAT backend is available at:
-
-http://localhost:5002
-
-The UAT health endpoint is:
-
-http://localhost:5002/health
-PROD Deployment
+```bash
+terraform plan -var-file="environments/prod.tfvars"
 terraform apply -var-file="environments/prod.tfvars"
+```
 
-The PROD frontend is available at:
+Review the execution plan before applying infrastructure changes.
 
-http://localhost:8083
+### 6.6 Verify FA1 Deployment
 
-The PROD backend is available at:
+Check the Docker containers and images:
 
-http://localhost:5003
-
-The PROD health endpoint is:
-
-http://localhost:5003/health
-12. Docker Verification
-
-Running Docker containers can be checked using:
-
+```bash
 docker ps
-
-Docker images can be checked using:
-
 docker images
+```
 
-The running containers should include the frontend and backend containers for the selected environment.
+Display Terraform outputs:
 
-For example, the PROD environment uses:
-
-devops-fa1-frontend-prod
-devops-fa1-backend-prod
-13. Terraform Outputs
-
-Terraform outputs can be displayed using:
-
+```bash
 terraform output
+```
 
-For PROD, the outputs include:
+Application URLs for each environment are:
 
-environment = "prod"
-frontend_url = "http://localhost:8083"
-backend_url = "http://localhost:5003"
-backend_health_url = "http://localhost:5003/health"
-14. Backend Health Check
+**QA**
 
-The backend provides a health endpoint:
+- Frontend: `http://localhost:8081`
+- Backend: `http://localhost:5001`
+- Health endpoint: `http://localhost:5001/health`
 
-/health
+**UAT**
 
-For example, the PROD health endpoint is:
+- Frontend: `http://localhost:8082`
+- Backend: `http://localhost:5002`
+- Health endpoint: `http://localhost:5002/health`
 
-http://localhost:5003/health
+**PROD**
 
-A successful response confirms that the backend container is running and responding correctly.
+- Frontend: `http://localhost:8083`
+- Backend: `http://localhost:5003`
+- Health endpoint: `http://localhost:5003/health`
 
-15. Multi-Environment Implementation
+Use the environment URLs corresponding to the configuration that is actually running.
 
-The main requirement of the assignment is achieved by using a single Terraform codebase for all environments.
+## 7. FA2 — Continuous Integration Pipeline
 
-The Terraform configuration is defined only once:
+### 7.1 Objective
 
-terraform/
-├── main.tf
-├── variables.tf
-└── outputs.tf
+FA2 introduces an automated CI workflow using GitHub Actions. The workflow runs when code is pushed to the `main` branch, when a pull request targets `main`, or when manually triggered.
 
-Different environment-specific values are supplied using:
+Workflow file:
 
-terraform/environments/
-├── qa.tfvars
-├── uat.tfvars
-└── prod.tfvars
+```text
+.github/workflows/ci-cd.yml
+```
 
-Therefore, the same infrastructure code can be used as follows:
+### 7.2 Pipeline Stages
 
-Same Terraform Code
-        |
-        +---- qa.tfvars ----> QA
-        |
-        +---- uat.tfvars ---> UAT
-        |
-        +---- prod.tfvars --> PROD
+The workflow performs these steps:
 
-No separate Terraform infrastructure code is created for QA, UAT or PROD.
+1. **Checkout repository:** downloads the repository source code onto the GitHub Actions runner.
+2. **Set up Python:** configures Python 3.11.
+3. **Install dependencies:** installs Flask and `prometheus-client`.
+4. **Run unit tests:** executes the automated backend tests.
+5. **Build backend image:** builds the backend Docker image.
+6. **Build frontend image:** builds the frontend Docker image.
+7. **Verify images:** lists the generated Docker images.
 
-16. Git Version Control
+### 7.3 Triggering the Pipeline
 
-Git is used to maintain the project and track changes.
+Commit and push a change to the main branch:
 
-Git repository initialization:
-
-git init
-
-Files can be checked using:
-
-git status
-
-Files can be staged using:
-
+```bash
 git add .
+git commit -m "describe the change"
+git push origin main
+```
 
-Changes can be committed using:
+Open the repository's **Actions** tab on GitHub to inspect the workflow run.
 
-git commit -m "Commit message"
+A green check mark indicates that all workflow steps completed successfully. A red cross indicates that at least one step failed.
 
-Commit history can be viewed using:
+### 7.4 Docker Image Tags
 
-git log --oneline
-17. .gitignore
+The CI workflow builds the following image tags:
 
-Terraform-generated files such as state files and the .terraform directory are excluded from Git using .gitignore.
+```text
+devops-fa1-backend:<commit-sha>
+devops-fa1-backend:latest
+devops-fa1-frontend:<commit-sha>
+devops-fa1-frontend:latest
+```
+
+The commit-specific tag identifies the source revision used to build the image.
+
+**Pipeline scope:** The current workflow builds images on the GitHub Actions runner. It does not publish images to a remote registry or automatically deploy them to Kubernetes.
+
+## 8. Automated Testing
+
+### 8.1 Test File
+
+Automated backend tests are maintained in:
+
+```text
+tests/test_app.py
+```
+
+The tests use Python's built-in `unittest` framework and Flask's test client.
+
+### 8.2 Tests Implemented
+
+**Home endpoint test**
+
+- Sends a GET request to `/`.
+- Checks that the HTTP status code is `200`.
+- Verifies the expected application name and running status.
+
+**Health endpoint test**
+
+- Sends a GET request to `/health`.
+- Checks that the HTTP status code is `200`.
+- Verifies that the returned status is `healthy`.
+
+### 8.3 Run Tests Locally
+
+Install the dependencies:
+
+```bash
+python -m pip install flask prometheus-client
+```
+
+Run the tests:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Both tests should pass before the code is pushed.
+
+### 8.4 Failure Handling
+
+The unit-test command returns a non-zero exit code when a test fails. Because the GitHub Actions workflow executes the test step before the Docker build steps, a failed test stops the normal pipeline execution.
+
+The expected pipeline sequence is:
+
+```text
+Git Push
+   |
+   v
+Checkout Repository
+   |
+   v
+Install Dependencies
+   |
+   v
+Run Unit Tests
+   |
+   +---- Failure ----> Pipeline Fails
+   |
+   v
+Build Backend Image
+   |
+   v
+Build Frontend Image
+   |
+   v
+Pipeline Success
+```
+
+## 9. Docker Containerization
+
+### 9.1 Backend Docker Image
+
+The backend Dockerfile is located at:
+
+```text
+docker/backend/Dockerfile
+```
+
+It uses Python 3.11 Alpine, installs Flask and `prometheus-client`, copies `app.py`, and starts the Flask application on port `5000`.
+
+Build the backend image locally:
+
+```bash
+docker build -t devops-fa1-backend:metrics-v1 ./docker/backend
+```
+
+### 9.2 Frontend Docker Image
+
+The frontend Dockerfile is located at:
+
+```text
+docker/frontend/Dockerfile
+```
+
+It creates an Nginx-based image that serves the frontend web page.
+
+Build the frontend image:
+
+```bash
+docker build -t devops-fa1-frontend:latest ./docker/frontend
+```
+
+### 9.3 Verify Images and Containers
+
+```bash
+docker images
+docker ps
+```
+
+The CI workflow builds both images automatically on the GitHub runner. Local builds are useful for testing and Kubernetes deployment in Docker Desktop.
+
+## 10. Kubernetes Deployment
+
+### 10.1 Objective
+
+Kubernetes manages the frontend and backend containers. Deployments maintain the desired number of application pods, while Services provide stable access to the pods.
+
+The Kubernetes manifests are stored in:
+
+```text
+k8s/
+```
+
+### 10.2 Deployment Manifests
+
+| File | Purpose |
+|---|---|
+| `backend-deployment.yaml` | Defines the backend Deployment and container |
+| `backend-service.yaml` | Exposes the backend through a NodePort Service |
+| `frontend-deployment.yaml` | Defines the frontend Deployment and container |
+| `frontend-service.yaml` | Exposes the frontend through a NodePort Service |
+
+The backend Deployment uses the `devops-fa1-backend` image. The frontend Deployment uses the `devops-fa1-frontend` image.
+
+### 10.3 Apply Kubernetes Resources
+
+Run these commands from the project root:
+
+```bash
+kubectl apply -f k8s/backend-deployment.yaml
+kubectl apply -f k8s/backend-service.yaml
+kubectl apply -f k8s/frontend-deployment.yaml
+kubectl apply -f k8s/frontend-service.yaml
+```
+
+Check Deployments:
+
+```bash
+kubectl get deployments
+```
+
+Check pods:
+
+```bash
+kubectl get pods
+```
+
+Check Services:
+
+```bash
+kubectl get services
+```
+
+### 10.4 Scaling the Backend
+
+The backend can be scaled by changing the desired replica count:
+
+```bash
+kubectl scale deployment backend --replicas=2
+```
+
+Verify the result:
+
+```bash
+kubectl get pods -l app=backend
+kubectl get deployment backend
+```
+
+Scaling demonstrates how Kubernetes maintains multiple backend pod replicas.
+
+### 10.5 Rollout Verification
+
+Check the backend rollout:
+
+```bash
+kubectl rollout status deployment/backend
+```
+
+Check the frontend rollout:
+
+```bash
+kubectl rollout status deployment/frontend
+```
+
+A successful rollout confirms that Kubernetes has completed the Deployment update.
+
+### 10.6 Updating the Backend Image
+
+For the local Docker Desktop environment, a newly built backend image can be deployed using a unique tag:
+
+```bash
+docker build -t devops-fa1-backend:metrics-v1 ./docker/backend
+kubectl set image deployment/backend backend=devops-fa1-backend:metrics-v1
+kubectl rollout status deployment/backend
+```
+
+Using a unique image tag helps avoid ambiguity when updating locally available images.
+
+## 11. Prometheus Monitoring
+
+### 11.1 Objective
+
+Prometheus collects time-series metrics from the backend and its own monitoring service. These metrics can be queried and visualized in Grafana.
+
+The Prometheus configuration file is:
+
+```text
+monitoring/prometheus.yml
+```
+
+### 11.2 Configuration
+
+The current configuration defines two scrape jobs:
+
+- `prometheus` — collects Prometheus's own metrics.
+- `backend` — scrapes the Flask backend's `/metrics` endpoint through `backend-service:5000`.
+
+The scrape interval is configured as 15 seconds.
+
+### 11.3 Prometheus Kubernetes Resources
+
+The file:
+
+```text
+monitoring/prometheus-deployment.yaml
+```
+
+defines the Prometheus Deployment and Service.
+
+The configuration is supplied through the `prometheus-config` ConfigMap.
+
+If the ConfigMap needs to be created or updated from the project root:
+
+```bash
+kubectl create configmap prometheus-config --from-file=prometheus.yml=monitoring/prometheus.yml --dry-run=client -o yaml | kubectl apply -f -
+```
+
+Apply the Prometheus resources:
+
+```bash
+kubectl apply -f monitoring/prometheus-deployment.yaml
+```
+
+Restart Prometheus if a configuration reload is required:
+
+```bash
+kubectl rollout restart deployment/prometheus
+kubectl rollout status deployment/prometheus
+```
+
+### 11.4 Verify Prometheus
+
+Check the Prometheus pod:
+
+```bash
+kubectl get pods
+```
+
+Forward the Prometheus Service port:
+
+```bash
+kubectl port-forward service/prometheus-service 9090:9090
+```
+
+Keep the terminal running and open:
+
+- Prometheus interface: `http://localhost:9090`
+- Targets: `http://localhost:9090/targets`
+- Query interface: `http://localhost:9090/graph`
+
+The backend target should show `UP`.
+
+### 11.5 Application Metrics
+
+The Flask backend exposes metrics using the Prometheus Python client.
+
+**Request counter**
+
+```promql
+sum(backend_http_requests_total)
+```
+
+This query counts the recorded HTTP requests across backend request labels.
+
+**Request duration rate**
+
+```promql
+rate(backend_http_request_duration_seconds_sum[5m])
+```
+
+This query shows the rate at which accumulated request-processing time increases over five minutes. It is not the average duration per request.
+
+**Average request duration**
+
+```promql
+rate(backend_http_request_duration_seconds_sum[5m])
+/
+rate(backend_http_request_duration_seconds_count[5m])
+```
+
+This query calculates average request duration in seconds when requests have occurred during the selected interval.
+
+## 12. Grafana Dashboard
+
+### 12.1 Objective
+
+Grafana visualizes metrics collected by Prometheus through a monitoring dashboard.
+
+The Grafana Kubernetes resources are defined in:
+
+```text
+monitoring/grafana-deployment.yaml
+```
+
+### 12.2 Access Grafana
+
+Forward the Grafana Service port:
+
+```bash
+kubectl port-forward service/grafana-service 3000:3000
+```
+
+Keep the terminal running and open:
+
+```text
+http://localhost:3000
+```
+
+Sign in with the credentials configured for your local Grafana deployment. Change demonstration credentials before using the setup outside a local lab.
+
+### 12.3 Configure the Prometheus Data Source
+
+Configure a Prometheus data source in Grafana.
+
+For the Kubernetes deployment, the Prometheus Service URL is:
+
+```text
+http://prometheus-service:9090
+```
+
+Use **Save & test** to verify the connection.
+
+### 12.4 Dashboard Panels
+
+The project dashboard is named:
+
+**FA2 DevOps Monitoring Dashboard**
+
+The four panels are:
+
+1. **Prometheus Target Availability** — shows the availability of Prometheus scrape targets using the `up` metric.
+2. **Total Prometheus HTTP Requests** — displays HTTP request activity for the Prometheus server.
+3. **Total Backend Requests** — displays the backend request counter.
+4. **Backend Request Duration Rate** — visualizes the rate of accumulated backend request-processing time.
+
+The dashboard combines monitoring-service metrics with application-specific metrics.
+
+## 13. Git Version Control
+
+Git maintains the source code, Dockerfiles, Terraform configuration, Kubernetes manifests, monitoring configuration and documentation.
+
+Check the current working tree:
+
+```bash
+git status
+```
+
+Review recent commits:
+
+```bash
+git log --oneline -10
+```
+
+Stage changes:
+
+```bash
+git add .
+```
+
+Create a commit:
+
+```bash
+git commit -m "describe the change"
+```
+
+Push commits to GitHub:
+
+```bash
+git push origin main
+```
+
+The GitHub Actions workflow runs automatically when a commit is pushed to `main`.
+
+## 14. .gitignore
+
+The `.gitignore` file excludes generated files and local artifacts that should not normally be tracked.
 
 Examples include:
 
+```text
 .terraform/
 *.tfstate
 *.tfstate.*
 crash.log
 crash.*.log
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+```
 
-This prevents local Terraform state and generated files from being unnecessarily committed to the repository.
+Terraform state files and generated Python files are excluded to keep the repository clean.
 
-18. Verification Summary
+## 15. End-to-End Verification Checklist
 
-The completed implementation demonstrates:
+Before the demonstration, verify each component.
 
-Git-based project management
-Docker containerization
-Frontend container deployment
-Backend/API container deployment
-Terraform infrastructure provisioning
-Terraform validation and planning
-QA environment deployment
-UAT environment deployment
-PROD environment deployment
-Reusable Terraform configuration
-Environment-specific .tfvars configuration
-Docker container verification
-Backend health checking
-Terraform output verification
-19. Conclusion
+### Git and CI/CD
 
-This assignment demonstrates Infrastructure as Code using Terraform with Docker and Git.
+- [ ] Source code and configuration are committed to Git.
+- [ ] Latest changes are pushed to GitHub.
+- [ ] GitHub Actions completes successfully.
+- [ ] Unit tests pass.
+- [ ] Both Docker images build successfully.
 
-A frontend and backend application environment is provisioned using Terraform. The same Terraform infrastructure code supports QA, UAT and PROD through environment-specific .tfvars files.
+### Docker
 
-This approach avoids duplicating infrastructure code and provides a reusable and maintainable multi-environment deployment structure.
+- [ ] Backend image builds successfully.
+- [ ] Frontend image builds successfully.
+- [ ] Docker images can be inspected using `docker images`.
 
+### Kubernetes
 
-Press:
+- [ ] Frontend Deployment is available.
+- [ ] Backend Deployment is available.
+- [ ] Frontend and backend pods are running.
+- [ ] Services are configured correctly.
+- [ ] Backend scaling can be demonstrated.
+- [ ] Deployment rollout status can be checked.
 
-```text
-Ctrl + S
-Step 2 — Check Git Difference
+### Prometheus and Grafana
 
-Go back to your CMD.
+- [ ] Prometheus pod is running.
+- [ ] Backend scrape target is `UP`.
+- [ ] Backend metrics can be queried.
+- [ ] Grafana connects to Prometheus.
+- [ ] Dashboard panels display metrics.
+- [ ] Application request and duration metrics are visible.
 
-You should be at:
+### Documentation
 
-C:\Users\Viraj Deshmukh\Desktop\DEVOPS FA>
+- [ ] README reflects the actual configuration.
+- [ ] Commands correspond to the project files.
+- [ ] Final changes are committed and pushed.
 
-Run:
+## 16. Limitations and Implementation Scope
 
-git diff -- README.md
+The current GitHub Actions workflow checks out the repository, installs Python dependencies, runs unit tests, and builds the frontend and backend Docker images.
 
-You should now see the larger README changes.
+The workflow does not currently publish images to an external container registry or automatically deploy the application to Kubernetes. Kubernetes deployment is performed using the configured local cluster and `kubectl` commands.
 
-Don't commit yet.
+The Prometheus configuration scrapes Prometheus itself and the Flask backend. Although Kubernetes CPU and memory usage can be inspected using `kubectl top`, those values are not automatically exported to Grafana by the current Prometheus configuration.
 
-Step 3 — Important correction
+These distinctions describe the actual implementation and identify possible future enhancements.
 
-Your previous README ended at:
+## 17. Conclusion
 
-└── README.md
+FA1 demonstrates Infrastructure as Code by reusing Terraform configuration to provision Docker-based QA, UAT and PROD environments.
 
-without a newline. That's why Git showed:
+FA2 extends the project with GitHub Actions, automated unit tests, Docker image builds, Kubernetes Deployments and Services, application metrics, Prometheus and Grafana.
 
-\ No newline at end of file
-
-The new README will end normally, so that's fine.
-
-📸 Don't take a screenshot of the diff
-
-The diff isn't important evidence for the assignment.
-
-Instead, after saving the README, send me the output of:
-
-git status
+Together, the two assignments demonstrate version control, infrastructure automation, application testing, containerization, orchestration and monitoring in a practical DevOps workflow.
