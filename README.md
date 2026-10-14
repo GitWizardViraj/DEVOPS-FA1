@@ -766,3 +766,4 @@ FA1 demonstrates Infrastructure as Code by reusing Terraform configuration to pr
 FA2 extends the project with GitHub Actions, automated unit tests, Docker image builds, Kubernetes Deployments and Services, application metrics, Prometheus and Grafana.
 
 Together, the two assignments demonstrate version control, infrastructure automation, application testing, containerization, orchestration and monitoring in a practical DevOps workflow.
+FA2 CI/CD automatic deployment test completed.
