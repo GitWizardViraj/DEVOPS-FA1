@@ -1,18 +1,17 @@
-
-name: FA2 CI Pipeline
+name: FA2 CI-CD Pipeline
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  build-test-and-docker:
-    runs-on: ubuntu-latest
+  build-test-deploy:
+    runs-on: [self-hosted, Windows, X64]
 
     steps:
       - name: Checkout repository
@@ -24,26 +23,47 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
+        shell: powershell
         run: |
           python -m pip install --upgrade pip
           python -m pip install flask prometheus-client
 
       - name: Run backend unit tests
+        shell: powershell
         run: python -m unittest discover -s tests -v
 
-      - name: Build backend Docker image
+      - name: Check Docker and Kubernetes
+        shell: powershell
         run: |
-          docker build \
-            -t devops-fa1-backend:${{ github.sha }} \
-            -t devops-fa1-backend:latest \
-            ./docker/backend
+          docker info
+          kubectl get nodes
 
-      - name: Build frontend Docker image
+      - name: Build backend image
+        shell: powershell
+        run: docker build -t "devops-fa1-backend:${{ github.sha }}" ./docker/backend
+
+      - name: Build frontend image
+        shell: powershell
+        run: docker build -t "devops-fa1-frontend:${{ github.sha }}" ./docker/frontend
+
+      - name: Deploy backend
+        shell: powershell
+        run: kubectl set image deployment/backend backend=devops-fa1-backend:${{ github.sha }}
+
+      - name: Deploy frontend
+        shell: powershell
+        run: kubectl set image deployment/frontend frontend=devops-fa1-frontend:${{ github.sha }}
+
+      - name: Verify backend rollout
+        shell: powershell
+        run: kubectl rollout status deployment/backend --timeout=120s
+
+      - name: Verify frontend rollout
+        shell: powershell
+        run: kubectl rollout status deployment/frontend --timeout=120s
+
+      - name: Verify deployment
+        shell: powershell
         run: |
-          docker build \
-            -t devops-fa1-frontend:${{ github.sha }} \
-            -t devops-fa1-frontend:latest \
-            ./docker/frontend
-
-      - name: Verify Docker images
-        run: docker images
+          kubectl get deployments
+          kubectl get pods
