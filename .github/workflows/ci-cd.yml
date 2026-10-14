@@ -1,0 +1,45 @@
+
+name: FA2 CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-test-and-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install flask
+
+      - name: Run backend unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Build backend Docker image
+        run: |
+          docker build \
+            -t devops-fa1-backend:${{ github.sha }} \
+            -t devops-fa1-backend:latest \
+            ./docker/backend
+
+      - name: Build frontend Docker image
+        run: |
+          docker build \
+            -t devops-fa1-frontend:${{ github.sha }} \
+            -t devops-fa1-frontend:latest \
+            ./docker/frontend
+
+      - name: Verify Docker images
+        run: docker images
